@@ -1,0 +1,30 @@
+--- festival.cc	2009-06-18 03:40:56.000000000 -0300
++++ /home/lsa/Desktop/Daniel/Patch/patch 2.0/festival.cc	2015-07-06 17:02:41.544132773 -0300
+@@ -115,7 +115,7 @@
+ using namespace std;
+ 
+ class Festival:public ThreadedDriver
+-{
++{ 
+   private:
+     int pid;      // Festival's pid so we can kill it later (if necessary)
+ 
+@@ -415,8 +415,17 @@
+   int numthisread;
+ 
+ 
+-  /* make sure we kill Festival on exiting */
+   pthread_cleanup_push(QuitFestival,this);
++///////////////////////////////////////////////////////////////NEW CODE
++  if(strcmp(festival_language,"spanish")==0)
++  {
++      if(write(sock,"(voice_el_diphone)",strlen("(voice_el_diphone)")) == -1)
++      {
++        perror("festival: write() failed to set language; exiting.");
++        break;
++      }
++  }
++  //////////////////////////////////////////////////////////////////////
+ 
+   /* loop and read */
+   for(;;)

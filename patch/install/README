@@ -1,0 +1,61 @@
+1) setar variaveis - verificar se elas sao realmente necessarias
+
+    export PYTHON_INCLUDE_DIR=/usr/include/python2.7/
+    export PYTHON_LIBRARY=/usr/lib/python2.7/
+    
+    export PATH=/usr/local/bin:$PATH
+    export CPATH=/usr/local/include:$CPATH
+    export LD_LIBRARY_PATH=/usr/lib:/usr/local/lib/:/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
+
+
+2) instalar dependencias
+
+    sudo apt-get install -y g++ pkg-config cmake libfltk1.1 libfltk1.1-dev freeglut3 freeglut3-dev libpng12-0 libpng12-dev libtool libltdl7 libltdl-dev libdb5.1-stl
+    sudo apt-get install -y cmake-curses-gui
+    sudo apt-get install -y libgnomecanvas2-dev libgnomecanvasmm-2.6-dev python-gnome2
+    # boost
+    sudo apt-get install -y libboost-thread-dev libboost-signals-dev libboost-all-dev
+    # opencv
+    sudo apt-get install -y libopencv-core-dev libcv-dev libcvaux-dev libhighgui-dev
+    # alsa - sound player
+    # http://player-stage-gazebo.10965.n7.nabble.com/CCmake-cannot-find-the-existing-asoundlib-h-for-ALSA-driver-td11198.html
+    sudo apt-get install -y libasound2-dev
+    # alsa alsa-tools  alsa-utils
+    # for pmap
+    sudo apt-get install -y libgsl0-dev libxmu-dev
+    # for python bindings
+    sudo apt-get install -y python-dev swig
+
+    2.1) lib necessária apenas no ubuntu 14.04
+        sudo apt-get install -y libpq-dev libpqxx-dev
+
+
+3) baixar player 3.0.2
+    baixar:
+        wget http://netcologne.dl.sourceforge.net/project/playerstage/Player/3.0.2/player-3.0.2.tar.gz
+    descompactar:
+        tar -vzxf player-3.0.2.tar.gz
+
+    3.1) acessa a pasta do player e aplicar patch em anexo
+        * para ubuntu 12.04 usar o seguinte comando:
+            patch -p1 < player_3.0.2_12.04.patch
+        * para ubuntu 14.04 usar o seguinte comando:
+            patch -p1 < player_3.0.2_14.04.patch
+
+    esta solucao eh baseada neste post
+
+    # http://ubuntuforums.org/showthread.php?t=2229375
+    #
+    # /usr/bin/ld: CMakeFiles/playerc++_test.dir/test.o: undefined reference to symbol '_ZN5boost6system15system_categoryEv'
+    # /usr/lib/gcc/x86_64-linux-gnu/4.8/../../../x86_64-linux-gnu/libboost_system.so: error adding symbols: DSO missing from command line
+
+
+4) passos normais de instalacao
+
+    mkdir build
+    cd build
+    ccmake ../   #<= selecionar pacotes que devem ser instalados. prestar atencao nas msg de warning !. selecionar:  build_pythoncpp_bindings - on, build_pythonc_bindings - on, debug = high,
+    cmake ../    #<= prestar atencao nas msg de warning ! verificar se existem dependencias a serem resolvidas
+    make
+    sudo make install
+
