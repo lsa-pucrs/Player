@@ -57,6 +57,7 @@ export LD_LIBRARY_PATH=/usr/lib:/usr/local/lib/:/usr/lib/x86_64-linux-gnu/:$LD_L
 
 cd ../..
 echo -e "${GREEN}Patching Player for Lubuntu 14.04 ... ${NC}\n"
+patch -b < patch/festival/festival.patch
 patch -p1 < patch/install/player_3.0.2_14.04.patch
 mkdir build
 cd build
