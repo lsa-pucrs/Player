@@ -1,7 +1,7 @@
-diff -rupN old_player-3.0.2/client_libs/libplayerc++/CMakeLists.txt player-3.0.2/client_libs/libplayerc++/CMakeLists.txt
---- old_player-3.0.2/client_libs/libplayerc++/CMakeLists.txt	2009-08-04 00:48:04.000000000 -0300
-+++ player-3.0.2/client_libs/libplayerc++/CMakeLists.txt	2015-07-18 22:49:25.500599544 -0300
-@@ -24,7 +24,7 @@ IF (BUILD_PLAYERCC)
+diff -ruN player-3.0.2-orig/client_libs/libplayerc++/CMakeLists.txt player-3.0.2/client_libs/libplayerc++/CMakeLists.txt
+--- player-3.0.2-orig/client_libs/libplayerc++/CMakeLists.txt	2009-08-04 00:48:04.000000000 -0300
++++ player-3.0.2/client_libs/libplayerc++/CMakeLists.txt	2016-07-13 18:09:45.696662707 -0300
+@@ -24,24 +24,34 @@
      # Look for Boost libraries
      IF (BUILD_PLAYERCC_BOOST)
          # There is a new, much better, FindBoost.cmake in 2.6
@@ -10,17 +10,54 @@ diff -rupN old_player-3.0.2/client_libs/libplayerc++/CMakeLists.txt player-3.0.2
              OPTION (Boost_USE_STATIC_LIBS "Use the static versions of the Boost libraries" OFF)
              MARK_AS_ADVANCED (Boost_USE_STATIC_LIBS)
              OPTION (USE_BOOST_THREAD "Use the Boost threading library" ON)
-@@ -42,7 +42,7 @@ IF (BUILD_PLAYERCC)
+             MARK_AS_ADVANCED (USE_BOOST_THREAD)
+             OPTION (USE_BOOST_SIGNALS "Use the Boost signalling library" ON)
+             MARK_AS_ADVANCED (USE_BOOST_SIGNALS)
++            OPTION (USE_BOOST_SYSTEM "Use the Boost system library" ON)
++            MARK_AS_ADVANCED (USE_BOOST_SYSTEM)
+ 
+             IF (USE_BOOST_THREAD)
+                 SET (BOOST_COMPONENTS thread)
+             ELSE (USE_BOOST_THREAD)
+                 SET (HAVE_BOOST_THREAD FALSE CACHE INTERNAL "Is the Boost::Thread library present")
+             ENDIF (USE_BOOST_THREAD)
++
+             IF (USE_BOOST_SIGNALS)
+                 SET (BOOST_COMPONENTS ${BOOST_COMPONENTS} signals)
              ELSE (USE_BOOST_SIGNALS)
                  SET (HAVE_BOOST_SIGNALS FALSE CACHE INTERNAL "Is the Boost::Signals library present")
              ENDIF (USE_BOOST_SIGNALS)
--            FIND_PACKAGE (Boost COMPONENTS ${BOOST_COMPONENTS})
-+            FIND_PACKAGE (Boost COMPONENTS ${BOOST_COMPONENTS} system)
++
++            IF (USE_BOOST_SYSTEM)
++                SET (BOOST_COMPONENTS ${BOOST_COMPONENTS} system)
++            ELSE (USE_BOOST_SYSTEM)
++                SET (HAVE_BOOST_SYSTEM FALSE CACHE INTERNAL "Is the Boost::System library present")
++            ENDIF (USE_BOOST_SYSTEM)
++
+             FIND_PACKAGE (Boost COMPONENTS ${BOOST_COMPONENTS})
              IF (Boost_FOUND)
                  PLAYERCC_ADD_INCLUDE_DIR (${Boost_INCLUDE_DIR})
-                 PLAYERCC_ADD_LINK_DIR (${Boost_LIBRARY_DIRS})
-@@ -78,7 +78,7 @@ IF (BUILD_PLAYERCC)
-                          "Boost libraries were not found. Boost::Signals and Boost::Thread support
+@@ -73,12 +83,25 @@
+                     MESSAGE (STATUS
+                             "Boost::Signals library not found, support will not be included.")
+                 ENDIF (Boost_SIGNALS_FOUND)
++
++                IF (Boost_SYSTEM_FOUND)
++                    GET_FILENAME_COMPONENT (boostSystemLib ${Boost_SYSTEM_LIBRARY} NAME_WE CACHE)
++                    STRING (REGEX REPLACE "^lib" "" boostSystemLib ${boostSystemLib})
++                    PLAYERCC_ADD_LINK_LIB (${boostSystemLib})
++                    SET (boostIncludeDir ${Boost_INCLUDE_DIR})
++                    SET (HAVE_BOOST_SYSTEM TRUE CACHE INTERNAL "Is the Boost::System library present")
++                    MESSAGE (STATUS
++                            "PlayerC++ client library will be built with Boost::System support.")
++                ELSE (Boost_SYSTEM_FOUND)
++                    MESSAGE (STATUS
++                            "Boost::System library not found, support will not be included.")
++                ENDIF (Boost_SYSTEM_FOUND)                
+             ELSE (Boost_FOUND)
+                 MESSAGE (STATUS
+-                         "Boost libraries were not found. Boost::Signals and Boost::Thread support
++                         "Boost libraries were not found. Boost::Signals and Boost::Thread Boost::System support
                           will not be included in PlayerC++.")
              ENDIF (Boost_FOUND)
 -        ELSE (CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
@@ -28,19 +65,68 @@ diff -rupN old_player-3.0.2/client_libs/libplayerc++/CMakeLists.txt player-3.0.2
              FIND_PACKAGE (Boost)
              IF (Boost_FOUND)
                  # For 2.4, assume that if boost is found then both signals and threads are present
-@@ -146,7 +146,7 @@ IF (BUILD_PLAYERCC)
-                          "Boost libraries were not found. Boost::Signals and Boost::Thread support
+@@ -141,15 +164,40 @@
+                              "PlayerC++ client library Boost::Signals support disabled -
+                              Boost::Signals library not found.")
+                 ENDIF (HAVE_BOOST_SIGNALS)
++
++                SET (HAVE_BOOST_SYSTEM TRUE CACHE INTERNAL "Is the Boost::System library present")
++                IF (HAVE_BOOST_SYSTEM)
++                    OPTION (USE_BOOST_SYSTEM "Use the Boost system library" ON)
++                    MARK_AS_ADVANCED (USE_BOOST_SYSTEM)
++                    IF (USE_BOOST_SYSTEM)
++                        MESSAGE (STATUS
++                             "PlayerC++ client library will be built with Boost::System support.")
++                        SET (boostSystemLib boost_system${BOOST_LIB_SUFFIX})
++                        PLAYERCC_ADD_LINK_LIB (${boostSystemLib})
++                        PLAYERCC_ADD_INCLUDE_DIR (${Boost_INCLUDE_DIR})
++                        PLAYERCC_ADD_LINK_DIR (${Boost_LIBRARY_DIRS})
++                        SET (boostIncludeDir ${Boost_INCLUDE_DIRS})
++                    ELSE (USE_BOOST_SYSTEM)
++                        SET (HAVE_BOOST_SYSTEM FALSE)
++                        MESSAGE (STATUS
++                                 "PlayerC++ client library Boost::System support disabled by
++                                 user.")
++                    ENDIF (USE_BOOST_SYSTEM)
++                ELSE (HAVE_BOOST_SYSTEM)
++                    MESSAGE (STATUS
++                             "PlayerC++ client library Boost::System support disabled -
++                             Boost::System library not found.")
++                ENDIF (HAVE_BOOST_SYSTEM)
++
+             ELSE (Boost_FOUND)
+                 MESSAGE (STATUS
+-                         "Boost libraries were not found. Boost::Signals and Boost::Thread support
++                         "Boost libraries were not found. Boost::Signals, Boost::Thread, and Boost::System support
                           will not be included in PlayerC++.")
              ENDIF (Boost_FOUND)
 -        ENDIF (CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 6)
 +        ENDIF (CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION GREATER 6)
      ELSE (BUILD_PLAYERCC_BOOST)
          MESSAGE (STATUS
-                  "Boost support disabled. Boost::Signals and Boost::Thread support will not be
-diff -rupN old_player-3.0.2/client_libs/libplayerc++/playerclient.cc player-3.0.2/client_libs/libplayerc++/playerclient.cc
---- old_player-3.0.2/client_libs/libplayerc++/playerclient.cc	2009-02-18 00:53:04.000000000 -0300
-+++ player-3.0.2/client_libs/libplayerc++/playerclient.cc	2015-07-18 22:15:02.984680820 -0300
-@@ -168,7 +168,7 @@ void PlayerClient::RunThread()
+-                 "Boost support disabled. Boost::Signals and Boost::Thread support will not be
++                 "Boost support disabled. Boost::Signals and Boost::Thread Boost::System support will not be
+                  included in PlayerC++.")
+     ENDIF (BUILD_PLAYERCC_BOOST)
+ 
+diff -ruN player-3.0.2-orig/client_libs/libplayerc++/playerc++config.h.in player-3.0.2/client_libs/libplayerc++/playerc++config.h.in
+--- player-3.0.2-orig/client_libs/libplayerc++/playerc++config.h.in	2009-04-08 05:20:15.000000000 -0300
++++ player-3.0.2/client_libs/libplayerc++/playerc++config.h.in	2016-07-13 17:51:48.912649974 -0300
+@@ -3,6 +3,10 @@
+ 
+ #cmakedefine HAVE_BOOST_THREAD 1
+ #cmakedefine HAVE_BOOST_SIGNALS 1
++// remove annoying warning
++// warning: #warning "Boost.Signals is no longer being maintained and is now deprecated. Please switch to Boost.Signals2. To disable  
++// this warning message, define BOOST_SIGNALS_NO_DEPRECATION_WARNING
++#define BOOST_SIGNALS_NO_DEPRECATION_WARNING
+ 
+ #if defined (HAVE_BOOST_THREAD)
+ #define _POSIX_PTHREAD_SEMANTICS
+diff -ruN player-3.0.2-orig/client_libs/libplayerc++/playerclient.cc player-3.0.2/client_libs/libplayerc++/playerclient.cc
+--- player-3.0.2-orig/client_libs/libplayerc++/playerclient.cc	2009-02-18 00:53:04.000000000 -0300
++++ player-3.0.2/client_libs/libplayerc++/playerclient.cc	2016-07-12 16:52:28.652173574 -0300
+@@ -168,7 +168,7 @@
        Read();
      };
      boost::xtime xt;
@@ -49,22 +135,10 @@ diff -rupN old_player-3.0.2/client_libs/libplayerc++/playerclient.cc player-3.0.
      // we sleep for 0 seconds
      boost::thread::sleep(xt);
    }
-diff -rupN old_player-3.0.2/client_libs/libplayerc++/test/CMakeLists.txt player-3.0.2/client_libs/libplayerc++/test/CMakeLists.txt
---- old_player-3.0.2/client_libs/libplayerc++/test/CMakeLists.txt	2009-07-13 11:03:44.000000000 -0300
-+++ player-3.0.2/client_libs/libplayerc++/test/CMakeLists.txt	2015-07-18 22:50:05.116597983 -0300
-@@ -40,7 +40,7 @@ IF (BUILD_PLAYERCC)
-         ADD_EXECUTABLE (playerc++_test ${testsSrcs})
-         TARGET_LINK_LIBRARIES (playerc++_test playerc playerc++ playerinterface
-                                playercommon playerwkb ${playerreplaceLib}
--                               ${PLAYERCC_EXTRA_LINK_LIBRARIES})
-+                               ${PLAYERCC_EXTRA_LINK_LIBRARIES} boost_system)
-     ENDIF (BUILD_CC_TESTS)
-   ENDIF (BUILD_PLAYERCC_BOOST)
- ENDIF (BUILD_PLAYERCC)
-diff -rupN old_player-3.0.2/cmake/internal/SearchForStuff.cmake player-3.0.2/cmake/internal/SearchForStuff.cmake
---- old_player-3.0.2/cmake/internal/SearchForStuff.cmake	2009-08-11 00:44:43.000000000 -0300
-+++ player-3.0.2/cmake/internal/SearchForStuff.cmake	2015-07-18 22:52:02.924593341 -0300
-@@ -35,15 +35,15 @@ ELSE (HAVE_XDR)
+diff -ruN player-3.0.2-orig/cmake/internal/SearchForStuff.cmake player-3.0.2/cmake/internal/SearchForStuff.cmake
+--- player-3.0.2-orig/cmake/internal/SearchForStuff.cmake	2009-08-11 00:44:43.000000000 -0300
++++ player-3.0.2/cmake/internal/SearchForStuff.cmake	2016-07-12 16:52:28.652173574 -0300
+@@ -35,15 +35,15 @@
  ENDIF (HAVE_XDR)
  SET (CMAKE_REQUIRED_LIBRARIES)
  
@@ -83,22 +157,10 @@ diff -rupN old_player-3.0.2/cmake/internal/SearchForStuff.cmake player-3.0.2/cma
  
  CHECK_FUNCTION_EXISTS (gettimeofday HAVE_GETTIMEOFDAY)
  CHECK_FUNCTION_EXISTS (usleep HAVE_USLEEP)
-diff -rupN old_player-3.0.2/examples/libplayerc++/CMakeLists.txt player-3.0.2/examples/libplayerc++/CMakeLists.txt
---- old_player-3.0.2/examples/libplayerc++/CMakeLists.txt	2009-08-11 00:44:43.000000000 -0300
-+++ player-3.0.2/examples/libplayerc++/CMakeLists.txt	2015-07-18 22:52:50.100591482 -0300
-@@ -18,7 +18,7 @@ IF (BUILD_PLAYERCC)
-         ADD_EXECUTABLE (${_name} ${ARGN})
-         TARGET_LINK_LIBRARIES (${_name} playerc++ playerc playerinterface playercommon
-                                ${playerreplaceLib} ${PLAYERC_EXTRA_LINK_LIBRARIES}
--                               ${PLAYERCC_EXTRA_LINK_LIBRARIES})
-+                               ${PLAYERCC_EXTRA_LINK_LIBRARIES} boost_system)
-         IF (PLAYER_OS_SOLARIS)
-             TARGET_LINK_LIBRARIES (${_name} rt)
-         ENDIF (PLAYER_OS_SOLARIS)
-diff -rupN old_player-3.0.2/server/CMakeLists.txt player-3.0.2/server/CMakeLists.txt
---- old_player-3.0.2/server/CMakeLists.txt	2009-12-15 22:51:26.000000000 -0200
-+++ player-3.0.2/server/CMakeLists.txt	2015-07-18 23:18:01.516531923 -0300
-@@ -36,7 +36,7 @@ SET (playerSrcs server.cc)
+diff -ruN player-3.0.2-orig/server/CMakeLists.txt player-3.0.2/server/CMakeLists.txt
+--- player-3.0.2-orig/server/CMakeLists.txt	2009-12-15 22:51:26.000000000 -0200
++++ player-3.0.2/server/CMakeLists.txt	2016-07-12 16:52:28.652173574 -0300
+@@ -36,7 +36,7 @@
  ADD_EXECUTABLE (player ${playerSrcs})
  TARGET_LINK_LIBRARIES (player playerdrivers playercore playercommon playertcp
                         playerudp playerinterface playerwkb ${playerreplaceLib}
@@ -107,10 +169,10 @@ diff -rupN old_player-3.0.2/server/CMakeLists.txt player-3.0.2/server/CMakeLists
  IF (INCLUDE_RTKGUI)
      TARGET_LINK_LIBRARIES (player rtk)
  ENDIF (INCLUDE_RTKGUI)
-diff -rupN old_player-3.0.2/server/drivers/shell/readlog.cc player-3.0.2/server/drivers/shell/readlog.cc
---- old_player-3.0.2/server/drivers/shell/readlog.cc	2009-12-15 22:51:26.000000000 -0200
-+++ player-3.0.2/server/drivers/shell/readlog.cc	2015-07-18 22:54:53.200586631 -0300
-@@ -665,7 +665,7 @@ void ReadLog::Main()
+diff -ruN player-3.0.2-orig/server/drivers/shell/readlog.cc player-3.0.2/server/drivers/shell/readlog.cc
+--- player-3.0.2-orig/server/drivers/shell/readlog.cc	2009-12-15 22:51:26.000000000 -0200
++++ player-3.0.2/server/drivers/shell/readlog.cc	2016-07-12 16:52:28.652173574 -0300
+@@ -665,7 +665,7 @@
        // back up to the beginning of the file
  #if HAVE_Z
        if (this->gzfile)
@@ -119,7 +181,7 @@ diff -rupN old_player-3.0.2/server/drivers/shell/readlog.cc player-3.0.2/server/
        else
          ret = fseek(this->file,0,SEEK_SET);
  #else
-@@ -711,7 +711,7 @@ void ReadLog::Main()
+@@ -711,7 +711,7 @@
        // compared to fgets (on uncompressed files), so use the latter.
  #if HAVE_Z
        if (this->gzfile)
@@ -128,39 +190,3 @@ diff -rupN old_player-3.0.2/server/drivers/shell/readlog.cc player-3.0.2/server/
        else
          ret = (fgets(this->line, this->line_size, (FILE*) this->file) == NULL);
  #else
-diff -rupN old_player-3.0.2/utils/playerjoy/CMakeLists.txt player-3.0.2/utils/playerjoy/CMakeLists.txt
---- old_player-3.0.2/utils/playerjoy/CMakeLists.txt	2009-07-13 23:48:56.000000000 -0300
-+++ player-3.0.2/utils/playerjoy/CMakeLists.txt	2015-07-18 22:55:38.816584833 -0300
-@@ -10,7 +10,7 @@ IF (BUILD_UTILS_PLAYERJOY)
-             PLAYER_ADD_EXECUTABLE (playerjoy playerjoy.cc)
-             TARGET_LINK_LIBRARIES (playerjoy playerc++ playerc playerinterface
-                                    playercommon ${PLAYERC_EXTRA_LINK_LIBRARIES}
--                                   ${PLAYERCC_EXTRA_LINK_LIBRARIES} ${PTHREAD_LIB})
-+                                   ${PLAYERCC_EXTRA_LINK_LIBRARIES} ${PTHREAD_LIB} boost_system)
-         ELSE (BUILD_PLAYERCC)
-             MESSAGE (STATUS "playerjoy will not be built - playerc++ client library is disabled")
-         ENDIF (BUILD_PLAYERCC)
-diff -rupN old_player-3.0.2/utils/playerprint/CMakeLists.txt player-3.0.2/utils/playerprint/CMakeLists.txt
---- old_player-3.0.2/utils/playerprint/CMakeLists.txt	2009-07-13 11:03:44.000000000 -0300
-+++ player-3.0.2/utils/playerprint/CMakeLists.txt	2015-07-18 22:56:17.596583305 -0300
-@@ -23,7 +23,7 @@ IF (BUILD_UTILS_PLAYERPRINT)
-         LINK_DIRECTORIES (${PLAYERCC_EXTRA_LINK_DIRS})
-         PLAYER_ADD_EXECUTABLE (playerprint playerprint.cc ${getoptSrc} ${usleepSrc} ${gettimeofdaySrc})
-         TARGET_LINK_LIBRARIES (playerprint playerc++ playerc playerinterface playercommon
--                               ${playerreplaceLib} ${PLAYERCC_EXTRA_LINK_LIBRARIES})
-+                               ${playerreplaceLib} ${PLAYERCC_EXTRA_LINK_LIBRARIES} boost_system)
-     ELSE (BUILD_PLAYERCC)
-         MESSAGE (STATUS "playerprint will not be built - playerc++ client library is disabled")
-     ENDIF (BUILD_PLAYERCC)
-diff -rupN old_player-3.0.2/utils/playerprop/CMakeLists.txt player-3.0.2/utils/playerprop/CMakeLists.txt
---- old_player-3.0.2/utils/playerprop/CMakeLists.txt	2009-07-13 11:03:44.000000000 -0300
-+++ player-3.0.2/utils/playerprop/CMakeLists.txt	2015-07-18 22:56:45.136582220 -0300
-@@ -14,7 +14,7 @@ IF (BUILD_UTILS_PLAYERPROP)
-         PLAYER_ADD_EXECUTABLE (playerprop playerprop.cpp ${getoptSrc})
-         TARGET_LINK_LIBRARIES (playerprop playerc++ playerc playerinterface playercommon
-                                ${playerreplaceLib} ${PLAYERC_EXTRA_LINK_LIBRARIES}
--                               ${PLAYERCC_EXTRA_LINK_LIBRARIES})
-+                               ${PLAYERCC_EXTRA_LINK_LIBRARIES} boost_system)
-     ELSE (BUILD_PLAYERCC)
-         MESSAGE (STATUS "playerprop will not be built - playerc++ client library is disabled")
-     ENDIF (BUILD_PLAYERCC)
