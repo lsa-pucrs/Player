@@ -1,7 +1,7 @@
 
 To compile and install Player, execute the following command in this directory
 
-```
+```bash
 sudo ./install.sh
 ```
 
