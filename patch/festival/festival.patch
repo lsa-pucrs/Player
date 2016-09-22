@@ -1,5 +1,5 @@
---- festival.cc	2009-06-18 03:40:56.000000000 -0300
-+++ /home/lsa/Desktop/Daniel/Patch/patch 2.0/festival.cc	2015-07-06 17:02:41.544132773 -0300
+--- player-3.0.2-orig/server/drivers/speech/festival.cc	2009-06-18 03:40:56.000000000 -0300
++++ player-3.0.2/server/drivers/speech/festival.cc	2015-07-06 17:02:41.544132773 -0300
 @@ -115,7 +115,7 @@
  using namespace std;
  

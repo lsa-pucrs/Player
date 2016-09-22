@@ -1,14 +1,17 @@
-I)First, make sure you have installed the spanish voice on festival. If it's not installed, install it using the command: $ apt-get install festvox-ellpc11k
-Test the voice and if everything works fine, go to II). 
+This patch enables to use spanish voice on festival. If this voice is not installed, install it using the command:
 
-II)If you want to use our patch, jump to III). If you want to create a patch from our source code yourself, use the diff command on linux:
-1. Open the linux terminal.
-2. Create the patch file using the diff command: $ diff -u /path/to/original/file/file /path/to/new/file/festival.cc > festival.patch
+```
+apt-get install festvox-ellpc11k
+```
 
+To apply the patch file, go to the Player home dir and run:
 
-III) To apply the patch file, first do a "fake-test" to make sure it works fine, using the command patch --dry run. If everything works fine, patch the file normally. Use the -b option to beckup the old file. The festival.cc file is located in .../playerXXXX/server/drivers/speech. After patching, you'll need to re-compile and re-install Player, using the commands "$ cmake .", " $ make" and "$make install".
-1. $ patch --dry-run -p1 -i festival.patch
-2. $ patch -b < festival.patch
+```
+patch -p1 < patch/festival/festival.patch
+```
 
-IV) To use the spanish voice, add this on the speech driver in the config file:
-1. language "spanish"
+To use the spanish voice with player, add this line on the speech driver in the config file:
+
+```
+language "spanish"
+```

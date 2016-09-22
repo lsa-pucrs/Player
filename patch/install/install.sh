@@ -52,12 +52,14 @@ apt-get install -y libgsl0-dev libxmu-dev
 apt-get install -y python-dev swig
 # PostGIS for a Player driver
 apt-get install -y libpq-dev libpqxx-dev
+# festival TTS - Spanish voice
+apt-get install festvox-ellpc11k
 
 export LD_LIBRARY_PATH=/usr/lib:/usr/local/lib/:/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
 
 cd ../..
 echo -e "${GREEN}Patching Player for Lubuntu 14.04 ... ${NC}\n"
-patch -b < patch/festival/festival.patch
+patch -p1 < patch/festival/festival.patch
 patch -p1 < patch/install/player_3.0.2_14.04.patch
 mkdir build
 cd build
