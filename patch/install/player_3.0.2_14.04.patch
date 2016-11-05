@@ -135,6 +135,30 @@ diff -ruN player-3.0.2-orig/client_libs/libplayerc++/playerclient.cc player-3.0.
      // we sleep for 0 seconds
      boost::thread::sleep(xt);
    }
+@@ -229,6 +229,8 @@ void PlayerClient::ReadIfWaiting()
+ 
+ void PlayerClient::Read()
+ {
++       try{
++               
+   assert(NULL!=mClient);
+   PRINT("read()");
+   // first read the data
+@@ -247,6 +249,14 @@ void PlayerClient::Read()
+   std::for_each(mProxyList.begin(),
+                 mProxyList.end(),
+                 std::mem_fun(&ClientProxy::ReadSignal));
++    // this avoids the client from crashing when Player is closed.            
++       }catch (PlayerCc::PlayerError e){
++               #ifndef NDEBUG
++                       std::cerr << e << std::endl;
++               #endif
++               std::cerr << "Could not connect to Player. Closing application ... " << std::endl;
++               exit(1);
++       }                
+ }
+ 
+ void PlayerClient::RequestDeviceList()
 diff -ruN player-3.0.2-orig/cmake/internal/SearchForStuff.cmake player-3.0.2/cmake/internal/SearchForStuff.cmake
 --- player-3.0.2-orig/cmake/internal/SearchForStuff.cmake	2009-08-11 00:44:43.000000000 -0300
 +++ player-3.0.2/cmake/internal/SearchForStuff.cmake	2016-07-12 16:52:28.652173574 -0300
