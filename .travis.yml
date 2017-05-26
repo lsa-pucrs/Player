@@ -7,7 +7,7 @@ compiler:
 before_install:
 - patch -p1 < patch/festival/festival.patch
 - patch -p1 < patch/install/player_3.0.2_14.04.patch
-- patch -p1 < patchdonnie/instalationSoundProxy.patch
+- patch -p1 < patch/donnie/instalationSoundProxy.patch
 
 # Install all of the dependencies:
 install:
