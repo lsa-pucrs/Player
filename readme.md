@@ -1,4 +1,4 @@
-Player - one hell of a robot server
+# Player - one hell of a robot server
 ----------------------------------
 This is the Player device interface, developed at the SRI AI Center, with
 help from many other places, and released under the GNU Lesser General Public
@@ -12,18 +12,21 @@ The Player homepage is:
   http://playerstage.sourceforge.net
 
 
-Installation
+## Installation
 ------------
 Read INSTALL for more detailed instructions.  For most people, the following
 sequence will suffice:
 
-  $ mkdir build
-  $ cd build/
-  $ cmake ../
-  $ make install
+> mkdir build
+
+> cd build/
+
+> cmake ../
+
+> make install
 
 To configure the build, do:
 
-  $ ccmake ../
+> ccmake ../
 
                     - brian gerkey (gerkey@willowgarage.com)
